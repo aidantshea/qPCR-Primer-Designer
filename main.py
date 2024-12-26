@@ -1,4 +1,6 @@
 from Bio import SeqIO
+from Bio.SeqUtils import MeltingTemp as mt
+from Bio.SeqUtils import gc_fraction
 
 # path to San1 gene of interest
 filepath = r"C:\_repos\qPCR-Primer-Designer\SAN1_datasets\ncbi_dataset\data\gene.fna"
@@ -39,5 +41,17 @@ def find_primers(sequence: str, min: int, max: int) -> list[str]:
         print(f"unable to determine possible primers, see exception: {error}")
         return []
 
-sequence = read_fasta(filepath)[0][1]
-primers = find_primers(sequence, 25, 27); print(primers[0])
+# this function filters a list of primers by gc_content and returns acceptable candidates as a list
+def filter_by_gc(primers: list[str], min_gc: float, max_gc: float) -> list[str]:
+    return [candidate for candidate in primers if (min_gc <= gc_fraction(candidate) <= max_gc)]
+
+# this function filters a list of primers by melting temperature and returns acceptable candidates as a list
+def filter_my_mt(primers: list[str], min_temp: int, max_temp: int) -> list[str]:
+    return [candidate for candidate in primers if (min_temp <= mt.Tm_NN(candidate) <= max_temp)]
+
+fasta = read_fasta(filepath)
+example_sequence = fasta[0][1]; print(example_sequence)
+
+p1 = find_primers(example_sequence, 17, 24); print(len(p1))
+p2 = filter_by_gc(p1, 0.4, 0.6); print(len(p2))
+p3 = filter_my_mt(p2, 55, 65); print(len(p3))
