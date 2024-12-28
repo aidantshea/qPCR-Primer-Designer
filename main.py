@@ -1,4 +1,5 @@
 from Bio import SeqIO
+from Bio.Seq import Seq
 from Bio.SeqUtils import MeltingTemp as mt
 from Bio.SeqUtils import gc_fraction
 
@@ -46,12 +47,24 @@ def filter_by_gc(primers: list[str], min_gc: float, max_gc: float) -> list[str]:
     return [candidate for candidate in primers if (min_gc <= gc_fraction(candidate) <= max_gc)]
 
 # this function filters a list of primers by melting temperature and returns acceptable candidates as a list
-def filter_my_mt(primers: list[str], min_temp: int, max_temp: int) -> list[str]:
+def filter_by_mt(primers: list[str], min_temp: int, max_temp: int) -> list[str]:
     return [candidate for candidate in primers if (min_temp <= mt.Tm_NN(candidate) <= max_temp)]
+
+# this function filters a list of primers for those with reverse primers of similar melting temperature
+def filter_compatible_pairs(primers: list[str], space: int = 25) -> list[list[Seq]]:
+    pairs: list[list[Seq]] = []
+    for i, primer in enumerate(primers[0:10]):
+        for reverse_primer in primers[i+space:]:
+            sequence = Seq(primer)
+            reverse_sequence = Seq(primer).reverse_complement()
+            if abs(mt.Tm_NN(sequence) - mt.Tm_NN(reverse_sequence) <= 2):
+                pairs.append([sequence, reverse_sequence])
+    return pairs
 
 fasta = read_fasta(filepath)
 example_sequence = fasta[0][1]; print(example_sequence)
 
 p1 = find_primers(example_sequence, 17, 24); print(len(p1))
 p2 = filter_by_gc(p1, 0.4, 0.6); print(len(p2))
-p3 = filter_my_mt(p2, 55, 65); print(len(p3))
+p3 = filter_by_mt(p2, 55, 65); print(len(p3))
+p4 = filter_compatible_pairs(p3); print(len(p4))
