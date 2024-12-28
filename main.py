@@ -1,21 +1,21 @@
 from Bio import SeqIO
 from Bio.Seq import Seq
-from Bio.SeqUtils import MeltingTemp as mt
 from Bio.SeqUtils import gc_fraction
+from Bio.SeqUtils import MeltingTemp as mt
 
 # path to San1 gene of interest
 filepath = r"C:\_repos\qPCR-Primer-Designer\SAN1_datasets\ncbi_dataset\data\gene.fna"
 
-# this function reads in a fasta file and returns its records as a nested list
-def read_fasta(infile: str) -> list[list[str]]:
+# this function reads in a fasta file and returns its records as a list of tuples
+def read_fasta(infile: str) -> list[tuple]:
 
     # attempts to parse file from given path as .fasta, iteratively appending its records
     try:
         print(f"attempting to pull records from the following path: {infile}")
-        records: list = []        
+        records: list[tuple] = []
         for element in SeqIO.parse(infile, 'fasta'):
-            ID: str = element.id; Seq: str = element.seq
-            record: list = [ID, Seq]
+            ID: str = element.id; sequence: Seq = element.seq
+            record: tuple = (ID, sequence)
             records.append(record)
             print(f"record added: {record}")        
         return records
@@ -23,7 +23,7 @@ def read_fasta(infile: str) -> list[list[str]]:
     # exception handling: prints error to terminal and returns empty nested list
     except Exception as error:
         print(f"unable to read file, see exception: {error}")
-        return [[]]
+        return []
 
 # this function generates a list of primer candidates from a parent sequence given minimal and maximal primer lengths
 def find_primers(sequence: str, min: int, max: int) -> list[str]:
