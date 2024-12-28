@@ -5,10 +5,10 @@ from fn_primer_pipes import find_primers, filter_by_gc, filter_by_mt, find_prime
 filepath = r"C:\_repos\qPCR-Primer-Designer\SAN1_datasets\ncbi_dataset\data\gene.fna"
 
 fasta = read_fasta(filepath)
-example_sequence = fasta[0][1]
+san1_gene = fasta[0][1]
 
-p1 = find_primers(example_sequence, 23, 23)
+p1 = find_primers(san1_gene, 23, 23)
 p2 = filter_by_gc(p1, 0.45, 0.55)
-p3 = filter_by_mt(p2, 55, 65)
+p3 = filter_by_mt(p2, 57, 63)
 p4 = find_primer_pairs(p3)
-p5 = filter_by_compatible_melting_point(p4, .8)
+p5 = filter_by_compatible_melting_point(p4, .5)
