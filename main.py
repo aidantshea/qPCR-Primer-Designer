@@ -26,15 +26,15 @@ def read_fasta(infile: str) -> list[tuple[str, Seq]]:
         return []
 
 # this function generates a list of primer candidates from a parent sequence given minimal and maximal primer lengths
-def find_primers(sequence: Seq, min: int, max: int) -> list[Seq]:
+def find_primers(sequence: Seq, min_primer_len: int, max_primer_len: int) -> list[Seq]:
     
     # attempts to iterate through sequence and compile primer candidates as a list
     try:
         primers: list = []
-        for i in range(len(sequence)):                  # iterating through every index in the sequence
-            for k in range(min, max + 1):               # iterating from minimal to maximal primer lengths
-                if (i + k <= len(sequence)):            # ensuring iterator stays within sequence
-                    primers.append(sequence[i:i+k])     # adding primer candidate to the list
+        for i in range(len(sequence)):                                  # iterating through every index in the sequence
+            for k in range(min_primer_len, max_primer_len + 1):         # iterating from minimal to maximal primer lengths
+                if (i + k <= len(sequence)):                            # ensuring iterator stays within sequence
+                    primers.append(sequence[i:i+k])                     # adding primer candidate to the list
         return primers
     
     # exception handling: prints error to terminal and returns empty list
@@ -50,19 +50,26 @@ def filter_by_gc(primers: list[Seq], min_gc: float, max_gc: float) -> list[Seq]:
 def filter_by_mt(primers: list[Seq], min_temp: int, max_temp: int) -> list[Seq]:
     return [candidate for candidate in primers if (min_temp <= mt.Tm_NN(candidate) <= max_temp)]
 
-# this function filters a list of primers for those with reverse primers of similar melting temperature
-def filter_compatible_pairs(primers: list[Seq], amplicon_length: int) -> list[tuple[Seq, Seq]]:
+# this function reads in a list of primers and returns possible primer pairs as a list of tuples
+def find_primer_pairs(primers: list[Seq]) -> list[tuple[Seq, Seq]]:
     pairs: list[tuple[Seq, Seq]] = []
     for i, forward_primer in enumerate(primers):
-        for reverse_primer in primers[i+amplicon_length:]:
-            if abs(mt.Tm_NN(forward_primer) - mt.Tm_NN(reverse_primer.reverse_complement()) <= 2):
-                pairs.append((forward_primer, reverse_primer))
+        for reverse_primer in primers[i+1:]:
+            pairs.append((forward_primer, reverse_primer))
     return pairs
+
+#this function reads in a list of primer pairs and returns those with compatible melting temperatures
+def filter_by_compatible_melting_point(primer_pairs: list[tuple[Seq, Seq]], max_Tm_difference: float) -> list[tuple[Seq, Seq]]:
+    return [pair for pair in primer_pairs if abs(mt.Tm_NN(pair[0]) - (mt.Tm_NN(pair[1])) <= max_Tm_difference)]
 
 fasta = read_fasta(filepath)
 example_sequence = fasta[0][1]
 
-p1 = find_primers(example_sequence, 23, 25); print(len(p1))
+p1 = find_primers(example_sequence, 23, 23); print(len(p1))
 p2 = filter_by_gc(p1, 0.45, 0.55); print(len(p2))
-p3 = filter_by_mt(p2, 57, 63); print(len(p3))
-p4 = filter_compatible_pairs(p3, 100); print(len(p4))
+p3 = filter_by_mt(p2, 55, 65); print(len(p3))
+p4 = find_primer_pairs(p3); print(len(p4))
+p5 = filter_by_compatible_melting_point(p4, .8); print(len(p5))
+
+#for i, seq in enumerate(p4):
+#    print(i, seq)
